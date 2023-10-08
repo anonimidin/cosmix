@@ -1,0 +1,1 @@
+aiogram==2.*python-dotenvrequestsbs4datetimelxml
