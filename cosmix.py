@@ -6,6 +6,7 @@ import logging
 import random
 import requests
 import json
+import feedparser
 from datetime import date, timedelta
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
@@ -48,22 +49,25 @@ NEAR_EARTH_ASTEROIDS_BUTTON = "🌠 Near-Earth Asteroids"
 ISS_LOCATION_BUTTON = "🛰️ ISS Location"
 
 
-# Function to fetch astronomy news
+# Function to fetch astronomy news from NASA RSS feed
 def fetch_astronomy_news():
-    url = "https://www.nasa.gov/news-release/feed/"
+    url = "https://www.nasa.gov/rss/dyn/breaking_news.rss"
     try:
-        response = requests.get(url)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.content, "xml")
-        items = soup.find_all("item")
+        # Parse the RSS feed
+        feed = feedparser.parse(url)
         news_items = []
-        for item in items[:5]:
-            title = item.find("title").text
-            link = item.find("link").text
-            description = item.find("description").text
-            news_items.append(f'🚀 <a href="{link}">{title}</a>\n{description}\n')
+        for entry in feed.entries:
+            title = entry.title
+            link = entry.link
+            description = entry.description
+            if description.strip():
+                news_items.append(f'🚀 <a href="{link}">{title}</a>\n{description}\n')
+
+        if not news_items:
+            return "No astronomy news found."
+
         return "\n".join(news_items)
-    except requests.exceptions.RequestException as e:
+    except Exception as e:
         logging.error(f"Error fetching astronomy news: {e}")
         return "An error occurred while fetching astronomy news."
 
@@ -228,15 +232,9 @@ async def start(message: types.Message):
 """
         THIS FUNC IS NOT WORKING CORRECTLY
 """
-# Message handler to listen for planet names
-@dp.message_handler(lambda message: message.text.lower() in planets_data.keys())
-async def handle_planet_name(message: types.Message):
-    await show_planet_info(message)
-
-
-# Show_planet_info function
+# Show_planet_info function 
 async def show_planet_info(message: types.Message):
-    planet_name = message.text.lower()
+    planet_name = message.text.lower().split(" ")[-1]
     if planet_name in planets_data:
         planet_info = planets_data[planet_name]
         planet_description = planet_info.get(
@@ -251,7 +249,9 @@ async def show_planet_info(message: types.Message):
         await message.answer("Planet information not available.")
 
 
-
+'''
+        HANDLERS
+'''
 # Back button handler
 @dp.message_handler(lambda message: message.text.lower() == "↩️ back")
 async def go_back_to_main_menu(message: types.Message):
@@ -276,11 +276,11 @@ async def go_back_to_main_menu(message: types.Message):
 
     await message.answer("Choose an option:", reply_markup=markup)
 
-
-'''
-        HANDLERS
-'''
-# Planets button handler
+# Message handler to listen for planet names
+@dp.message_handler(lambda message: message.text.lower() in planets_data.keys())
+async def handle_planet_name(message: types.Message):
+    await show_planet_info(message)
+# Planets button handler 
 @dp.message_handler(lambda message: message.text.lower() == PLANETS_BUTTON.lower())
 async def show_planets(message: types.Message):
     markup = ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
@@ -292,7 +292,7 @@ async def show_planets(message: types.Message):
         "The Solar System consists of nine planets. Choose a planet to learn more or press '↩️ Back' to return to the main menu:",
         reply_markup=markup,
     )
-
+    
 # Space news button handler
 @dp.message_handler(lambda message: message.text.lower() == SPACE_NEWS_BUTTON.lower())
 async def show_space_news(message: types.Message):
