@@ -1,5 +1,6 @@
 # I WAS IN HURRY, SO THE CODE HAS MANY BUGS TO FIX, FEEL FREE TO COMMIT FIXED SOLUTIONS OF BUGS.
 # CODE CREATED BY t.me/anonimidin.
+import aiohttp
 import os
 import logging
 import random
@@ -130,12 +131,12 @@ def fetch_near_earth_asteroids():
 
 """THIS FUNC IS NOT WORKING CORRECTLY (MAYBE)"""
 # Function to fetch Mars weather
-async def fetch_mars_weather():
+async def fetch_mars_weather(session):
     api_url = f"https://api.nasa.gov/insight_weather/?api_key={NASA_API_KEY}&feedtype=json&ver=1.0"
     try:
-        response = await bot.session.get(api_url)
-        response.raise_for_status()
-        data = await response.json()
+        async with session.get(api_url) as response:
+            response.raise_for_status()
+            data = await response.json()
 
         if not data.get("sol_keys"):
             return "No Mars weather data available at the moment. Please check again later."
@@ -153,8 +154,6 @@ async def fetch_mars_weather():
     except Exception as e:
         logging.error(f"Error fetching Mars weather data: {e}")
         return "An error occurred while fetching Mars weather data."
-"""THIS FUNC IS NOT WORKING CORRECTLY"""
-
 # Function to fetch ISS location and astronaut information
 def fetch_iss_data():
     try:
@@ -226,28 +225,9 @@ async def start(message: types.Message):
     )
 
 
-# Mars weather button handler
-@dp.message_handler(lambda message: message.text.lower() == MARS_WEATHER_BUTTON.lower())
-async def show_mars_weather(message: types.Message, state: FSMContext):
-    mars_weather = await fetch_mars_weather()
-    await message.answer(mars_weather, parse_mode=ParseMode.MARKDOWN)
-
-
-# Planets button handler
-@dp.message_handler(lambda message: message.text.lower() == PLANETS_BUTTON.lower())
-async def show_planets(message: types.Message):
-    markup = ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
-    planets = list(planets_data.keys())
-    for planet in planets:
-        markup.add(KeyboardButton(f"🪐 {planet}"))
-    markup.add(KeyboardButton("↩️ Back"))
-    await message.answer(
-        "The Solar System consists of nine planets. Choose a planet to learn more or press '↩️ Back' to return to the main menu:",
-        reply_markup=markup,
-    )
-
-
-"""THIS FUNC IS NOT WORKING CORRECTLY"""
+"""
+        THIS FUNC IS NOT WORKING CORRECTLY
+"""
 # Message handler to listen for planet names
 @dp.message_handler(lambda message: message.text.lower() in planets_data.keys())
 async def handle_planet_name(message: types.Message):
@@ -270,7 +250,6 @@ async def show_planet_info(message: types.Message):
     else:
         await message.answer("Planet information not available.")
 
-"""THIS FUNC IS NOT WORKING CORRECTLY"""
 
 
 # Back button handler
@@ -298,13 +277,34 @@ async def go_back_to_main_menu(message: types.Message):
     await message.answer("Choose an option:", reply_markup=markup)
 
 
+'''
+        HANDLERS
+'''
+# Planets button handler
+@dp.message_handler(lambda message: message.text.lower() == PLANETS_BUTTON.lower())
+async def show_planets(message: types.Message):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True, selective=True)
+    planets = list(planets_data.keys())
+    for planet in planets:
+        markup.add(KeyboardButton(f"🪐 {planet}"))
+    markup.add(KeyboardButton("↩️ Back"))
+    await message.answer(
+        "The Solar System consists of nine planets. Choose a planet to learn more or press '↩️ Back' to return to the main menu:",
+        reply_markup=markup,
+    )
+
 # Space news button handler
 @dp.message_handler(lambda message: message.text.lower() == SPACE_NEWS_BUTTON.lower())
 async def show_space_news(message: types.Message):
     news = fetch_astronomy_news()
     await message.answer(news, parse_mode=ParseMode.HTML)
 
-
+# Space fact button handler
+@dp.message_handler(lambda message: message.text.lower() == SPACE_FACT_BUTTON.lower())
+async def show_space_fact(message: types.Message):
+    space_fact = generate_space_fact()
+    await message.answer(space_fact)
+    
 # Astronomy Picture of the Day (APOD) button handler
 @dp.message_handler(lambda message: message.text.lower() == APOD_BUTTON.lower())
 async def show_apod(message: types.Message):
@@ -313,13 +313,12 @@ async def show_apod(message: types.Message):
     await message.answer_photo(photo=image_url, caption="", parse_mode=ParseMode.HTML)
     await message.answer(explanation, parse_mode=ParseMode.HTML)
 
-
-# Space fact button handler
-@dp.message_handler(lambda message: message.text.lower() == SPACE_FACT_BUTTON.lower())
-async def show_space_fact(message: types.Message):
-    space_fact = generate_space_fact()
-    await message.answer(space_fact)
-
+# Mars weather button handler
+@dp.message_handler(lambda message: message.text.lower() == MARS_WEATHER_BUTTON.lower())
+async def show_mars_weather(message: types.Message, state: FSMContext):
+    async with aiohttp.ClientSession() as session:
+        mars_weather = await fetch_mars_weather(session)
+        await message.answer(mars_weather, parse_mode=ParseMode.MARKDOWN)
 
 # Near-Earth Asteroids button handler
 @dp.message_handler(
@@ -329,7 +328,6 @@ async def show_near_earth_asteroids(message: types.Message):
     asteroid_info = fetch_near_earth_asteroids()
     await message.answer(asteroid_info)
 
-
 # ISS Location button handler
 @dp.message_handler(lambda message: message.text.lower() == ISS_LOCATION_BUTTON.lower())
 async def show_iss_location(message: types.Message):
@@ -337,6 +335,6 @@ async def show_iss_location(message: types.Message):
     await message.answer(iss_location, parse_mode=ParseMode.MARKDOWN)
 
 
-# Main bot execution
+
 if __name__ == "__main__":
     executor.start_polling(dp, skip_updates=True)
