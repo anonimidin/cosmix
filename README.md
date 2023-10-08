@@ -1,7 +1,7 @@
 # COSMIX - Solar System Information Bot
 ![LOGO](cosmix.png)
 
-COSMIX is a Telegram bot that provides information about the Solar System, space news, facts, and more. It's a fun and educational bot created by [S0M0NI_BL00D_0VERFLAW]([https://t.me/anonimidin](https://www.spaceappschallenge.org/2023/find-a-team/s0m0ni_bl00d_0verfl0w/)) with a passion for space exploration in only 2 days...
+COSMIX is a Telegram bot that provides information about the Solar System, space news, facts, and more. It's a fun and educational bot created by [S0M0NI_BL00D_0VERFLAW](https://www.spaceappschallenge.org/2023/find-a-team/s0m0ni_bl00d_0verfl0w/) with a passion for space exploration in only 2 days...
 
 ## Presentation 
 - CLONE REPO AND OPEN IT MANUALLY!
@@ -39,8 +39,8 @@ Before you can run COSMIX, you'll need the following:
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/cosmix-telegram-bot.git
-   cd cosmix-telegram-bot
+   git clone https://github.com/anonimidin/cosmix
+   cd cosmix
    
 2. Create a virtual environment (optional but recommended):
 
